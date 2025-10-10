@@ -1,0 +1,27 @@
+<pre class='metadata'>
+Title: Iframe Media Pausing
+Shortname: iframe-media-pausing
+Level: 1
+Status: w3c/UD
+Group: wicg
+Repository: WICG/iframe-media-pausing
+URL: https://github.com/WICG/iframe-media-pausing
+Editor: Gabriel Santana Brito, Microsoft https://microsoft.com/, gabrielbrito@microsoft.com, https://github.com/gabrielsanbrito
+Abstract: This specification defines a new permission policy that allows the
+          user-agent to pause media playback in iframes which are not visible to
+          the user.
+Complain About: accidental-2119 yes, missing-example-ids yes
+Markup Shorthands: markdown yes, css no
+</pre>
+
+# Introduction # {#intro}
+
+<em>This section is non-normative.</em>
+
+Web applications that host embedded media content via iframes may wish to respond to application input by temporarily hiding the media content. These applications may not want to unload the entire iframe when it's not rendered since it could generate user-perceptible performance and experience issues when showing the media content again. At the same time, the user could have a negative experience if the media continues to play and emit audio when not rendered. This proposal aims to provide web applications with the ability to control embedded media content in such a way that guarantees their users have a good experience when the iframe's render status is changed.
+
+## Goals ## {#goals}
+
+Propose a mechanism to allow embedder documents to limitedly control embedded iframe media playback based on whether the embedded iframe is rendered or not:
+* When the iframe is not rendered, the embedder is able to pause the iframe media playback; and
+* When the iframe becomes rendered again, the embedder is able to resume the iframe media playback.
