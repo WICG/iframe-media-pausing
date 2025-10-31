@@ -12,10 +12,10 @@ Abstract: This specification defines a new permission policy that allows the
           the user.
 Complain About: accidental-2119 yes, missing-example-ids yes
 Default Biblio Status: current
-Markup Shorthands: markdown yes, css no, dfn yes
+Markup Shorthands: markdown yes, css no, dfn yes, markup yes
 </pre>
 
-<pre class='anchors'>
+<pre class="anchors">
 spec: webaudio; urlPrefix: https://webaudio.github.io/web-audio-api/;
     type: dfn; text: allowed to start; url: #allowed-to-start
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/;
@@ -29,51 +29,32 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/;
 
 <em>This section is non-normative.</em>
 
-Web applications that host embedded media content via iframes may wish to
-respond to application input by temporarily hiding the media content. These
-applications may not want to unload the entire iframe when it's not rendered
-since it could generate user-perceptible performance and experience issues when
-showing the media content again. At the same time, the user could have a
-negative experience if the media continues to play and emit audio when not
-rendered. This proposal aims to provide web applications with the ability to
-control embedded media content in such a way that guarantees their users have a
-good experience when the iframe's render status is changed.
+Web applications that host embedded media content via iframes may wish to respond to application input by temporarily hiding the media content.
+These applications may not want to unload the entire iframe when it's not rendered since it could generate user-perceptible performance and iframe state loss issues when showing the media content again.
+At the same time, the user could have a negative experience if the media continues to play and emit audio when not rendered.
+This proposal aims to provide web applications with the ability to control embedded media content in such a way that guarantees their users have a good experience when the iframe's render status is changed.
 
 ## Goals ## {#goals}
 
 Propose a mechanism to allow embedder documents to limitedly control embedded
 iframe media playback based on whether the embedded iframe is rendered or not:
-* When the iframe is not rendered, the embedder is able to pause the iframe
-    media playback; and
-* When the iframe becomes rendered again, the embedder is able to resume the
-    iframe media playback.
+* When the iframe is not rendered, the embedder is able to pause the iframe's media playback; and
+* When the iframe becomes rendered again, the embedder is able to resume the iframe media playback.
 
 # API # {#api}
 
-Control over media playback in [=nested browsing contexts=] in response to their visibility is relevant for user
-experience and performance reasons. Although simply disposing of the [=nested
-browsing context=] when not rendered would also achieve the same result (no
-audible media playback), it could lead to user-perceptible performance issues
-when the [=nested browsing context=] is rendered again, since it would need to 
-be recreated from scratch. Moreover, disposing of the context could also lead to
-loss of state that the user might expect to be preserved - e.g. form data.
+Control over media playback in [=nested browsing contexts=] in response to their visibility is relevant for user experience and performance reasons.
+Although simply disposing of the [=nested browsing context=] when not rendered would also achieve the same result (no audible media playback), it could lead to user-perceptible performance issues when the [=nested browsing context=] is rendered again, since it would need to be recreated from scratch.
+Moreover, disposing of the context could also lead to loss of state that the user might expect to be preserved - e.g. form data.
 
-This specification defines a new [=permission policy=] identified by the token
-"<dfn export><code>media-playback-while-not-visible</code></dfn>" that controls whether a [=child navigable=]'s [=navigable/container document=]
-is allowed to play media while it is not [=being rendered=].
-The [=default allowlist=] for this policy is <code>"*"</code>, meaning that
-documents are allowed to play media while not rendered unless the policy is
-explicitly disabled.
+This specification defines a new [=policy-controlled feature=] identified by the token "<dfn export><code>media-playback-while-not-visible</code></dfn>" that controls whether a {{Document}} is allowed to play media while it is not [=being rendered=].
+The [=default allowlist=] for this policy is "[=default allowlist/*=]", meaning that documents are allowed to play media while not rendered unless the policy is explicitly disabled.
 
-An {{iframe}} is <dfn>not allowed to play media while not rendered</dfn> if the "<a><code>media-playback-while-not-visible</code></a>" permission policy
-is <code>disabled</code> for it.
-
+A {{Document}} |document| is <dfn>allowed to play media while not rendered</dfn> if the "<a><code>media-playback-while-not-visible</code></a>" permission policy is <code>enabled</code> for it. |document| is disallowed otherwise. 
 
 ## Usage example ## {#usage-example}
 
-Example showing how to use the <code>media-playback-while-not-visible</code>
-permission policy to prevent an iframe and all of its children from playing media when the iframe is not
-[=being rendered=].
+Example showing how to use the <code>media-playback-while-not-visible</code> permission policy to prevent an <{iframe}> and all of its children from playing media when the iframe is not [=being rendered=].
 
 <div id="media-element-example" class="example">
   <pre>
@@ -81,56 +62,40 @@ permission policy to prevent an iframe and all of its children from playing medi
   </pre>
 </div>
 
-# Interoperability with other specifications # {#interoperability}
+# Integration with other specifications # {#integration}
 
-There are several ways to render audible media content on the web, which means 
-that this specification has points of contact with other specifications. 
-The "<a><code>media-playback-while-not-visible</code></a>" strictly interacts with 
-audible media content in two scenarios:
+There are several ways to render audible media content on the web, which means that this specification has points of contact with other specifications. 
+The "<a><code>media-playback-while-not-visible</code></a>" strictly interacts with audible media content in two scenarios:
 
 1. When the iframe is not rendered and it attempts to play audible media; and
 2. When the iframe is currently playing audible media and stops [=being rendered=] during playback.
 
-The following sections describe how the
-"<a><code>media-playback-while-not-visible</code></a>" permission policy
-interoperates with other specifications.
+The following sections describe how the "<a><code>media-playback-while-not-visible</code></a>" permission policy integrates with other specifications.
 
-## HTML ## {#html-interop}
+## HTMLMediaElement ## {#html-media-element-integration}
 
-Let |mediaElement| be an {{HTMLMediaElement}} in a {{iframe}} |frame| that is
-[=not allowed to play media while not rendered=].
+Let |mediaElement| be an {{HTMLMediaElement}} in a <{iframe}> |frame| that is not [=allowed to play media while not rendered=].
 
 |mediaElement| is not [=allowed to play=] media while |frame| is not [=being rendered=].
-Calling <code>play()</code> on |mediaElement| SHOULD return a promise rejected
-with a "{{NotAllowedError}}" {{DOMException}}.
+Calling <code>play()</code> on |mediaElement| SHOULD return a promise rejected with a "{{NotAllowedError}}" {{DOMException}}.
 
-When |mediaElement| is currently playing media and |frame| stops [=being rendered=]
-during playback, the user-agent MUST run the [=internal pause steps=] on |mediaElement|. 
+When |mediaElement| is currently playing media and |frame| stops [=being rendered=] during playback, the user-agent MUST run the [=internal pause steps=] on |mediaElement|. 
 
-## Web Audio ## {#web-audio-interop}
+## Web Audio ## {#web-audio-integration}
 
-Let |audioContext| be an {{AudioContext}} in a {{iframe}} |frame| that is
-[=not allowed to play media while not rendered=].
+Let |audioContext| be an {{AudioContext}} in a <{iframe}> |frame| that is not [=allowed to play media while not rendered=].
 
-|audioContext| MUST not be [=allowed to start=] while |frame| is not
-[=being rendered=]. Therefore, if |audioContext| is created while |frame| is not
-[=being rendered=], it must be initialized in the {{AudioContextState/suspended}} state.
-Further attempts to call {{AudioContext/resume()}} on |audioContext| while |frame| is
-not [=being rendered=] MUST return a promise rejected with
-{{InvalidStateError}} and transition |audioContext| to the
-{{AudioContextState/interrupted}} state.
+|audioContext| MUST not be [=allowed to start=] while |frame| is not [=being rendered=].
+Therefore, if |audioContext| is created while |frame| is not [=being rendered=], it must be initialized in the {{AudioContextState/suspended}} state.
+Further attempts to call {{AudioContext/resume()}} on |audioContext| while |frame| is not [=being rendered=] MUST return a promise rejected with {{InvalidStateError}} and ransition |audioContext| to the {{AudioContextState/interrupted}} state.
 
-When |audioContext| is currently in the {{AudioContextState/running}} state and |frame| stops [=being rendered=],
-the user-agent MUST {{AudioContext/interruption-start|start an interruption}} on |audioContext|.
+When |audioContext| is currently in the {{AudioContextState/running}} state and |frame| stops [=being rendered=], the user-agent MUST {{AudioContext/interruption-start|start an interruption}} on |audioContext|.
 When the |frame| becomes rendered again, the user-agent MUST then {{AudioContext/interruption-end|end the interruption}} on |audioContext|.
 
-## Autoplay ## {#autoplay-interop}
+## Autoplay ## {#autoplay-integration}
 
-A {{HTMLMediaElement}} |mediaElement| that is [=eligible for autoplay=] but whose parent {{iframe}} |frame| is [=not allowed to play media while not rendered=]
-MUST NOT start playing automatically while |frame| is not [=being rendered=].
+A {{HTMLMediaElement}} |mediaElement| whose parent <{iframe}> |frame| is not [=allowed to play media while not rendered=] SHOULD NOT be [=eligible for autoplay=] while |frame| is not [=being rendered=].
 
-Moreover, if |mediaElement| is currently playing because of autoplay and |frame| stops [=being rendered=],
-the user-agent MUST run the [=internal pause steps=] on |mediaElement|.
+Moreover, if |mediaElement| is currently playing because of autoplay and |frame| stops [=being rendered=], the user-agent MUST run the [=internal pause steps=] on |mediaElement|.
 
-The "<a><code>media-playback-while-not-visible</code></a>" permission policy MUST NOT affect autoplay behavior
-if |frame| is [=being rendered=].
+The "<a><code>media-playback-while-not-visible</code></a>" permission policy MUST NOT affect autoplay behavior if |frame| is currently [=being rendered=].
