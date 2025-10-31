@@ -20,6 +20,7 @@ spec: webaudio; urlPrefix: https://webaudio.github.io/web-audio-api/;
     type: dfn; text: allowed to start; url: #allowed-to-start
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/;
     type: dfn; text: allowed to play; url: media.html#allowed-to-play
+    type: dfn; text: content document; url: document-sequences.html#concept-bcc-content-document
     type: dfn; text: eligible for autoplay; url: media.html#eligible-for-autoplay
     type: dfn; text: internal pause steps; url: media.html#internal-pause-steps
     type: dfn; text: nested browsing context; url: document-sequences.html#nested-browsing-context
@@ -74,23 +75,36 @@ The following sections describe how the "<a><code>media-playback-while-not-visib
 
 ## HTMLMediaElement ## {#html-media-element-integration}
 
-Let |mediaElement| be an {{HTMLMediaElement}} in a <{iframe}> |frame| that is not [=allowed to play media while not rendered=].
+Let |frame| be an <{iframe}>. Let {{Document}} |document| be the [=content document=] of one of |frame|'s [=child navigables=]. Let |mediaElement| be an {{HTMLMediaElement}} in |document|
 
-|mediaElement| is not [=allowed to play=] media while |frame| is not [=being rendered=].
-Calling <code>play()</code> on |mediaElement| SHOULD return a promise rejected with a "{{NotAllowedError}}" {{DOMException}}.
+If |document| is not [=allowed to play media while not rendered=] and |frame| is not [=being rendered=], then |mediaElement| is not [=allowed to play=].
 
-When |mediaElement| is currently playing media and |frame| stops [=being rendered=] during playback, the user-agent MUST run the [=internal pause steps=] on |mediaElement|. 
+Note: Calling {{HTMLMediaElement/play()}} on |mediaElement| while it is not [=allowed to play=] will return a promise rejected with a "{{NotAllowedError}}" {{DOMException}}.
+
+When |frame| stops [=being rendered=]:
+
+1. If |document| is not [=allowed to play media while not rendered=]:
+    1. Run the [=internal pause steps=] on |mediaElement|.
 
 ## Web Audio ## {#web-audio-integration}
 
-Let |audioContext| be an {{AudioContext}} in a <{iframe}> |frame| that is not [=allowed to play media while not rendered=].
+Let |frame| be an <{iframe}>. Let {{Document}} |document| be the [=content document=] of one of |frame|'s [=child navigables=]. Let |audioContext| be an {{AudioContext}} in |document|.
 
-|audioContext| MUST not be [=allowed to start=] while |frame| is not [=being rendered=].
-Therefore, if |audioContext| is created while |frame| is not [=being rendered=], it must be initialized in the {{AudioContextState/suspended}} state.
-Further attempts to call {{AudioContext/resume()}} on |audioContext| while |frame| is not [=being rendered=] MUST return a promise rejected with {{InvalidStateError}} and ransition |audioContext| to the {{AudioContextState/interrupted}} state.
+If |document| is not [=allowed to play media while not rendered=] and |frame| is not [=being rendered=], then |audioContext| is not [=allowed to start=].
 
-When |audioContext| is currently in the {{AudioContextState/running}} state and |frame| stops [=being rendered=], the user-agent MUST {{AudioContext/interruption-start|start an interruption}} on |audioContext|.
-When the |frame| becomes rendered again, the user-agent MUST then {{AudioContext/interruption-end|end the interruption}} on |audioContext|.
+Note: If |audioContext| is created while |frame| is not [=being rendered=], it will be initialized in the {{AudioContextState/suspended}} state. Furthermore, attempting to call {{AudioContext/resume()}} on |audioContext| while |frame| is not [=being rendered=] will return a promise rejected with {{InvalidStateError}} and transition |audioContext| to the {{AudioContextState/interrupted}} state.
+
+When |frame| stops [=being rendered=]:
+
+1. If |document| is not [=allowed to play media while not rendered=]:
+    1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/running}}:
+        1. {{AudioContext/interruption-start|Start an interruption}} on |audioContext|.
+
+When |frame| becomes [=being rendered=] again:
+
+1. If |document| is not [=allowed to play media while not rendered=]:
+    1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/interrupted}}:
+        1. {{AudioContext/interruption-end|End the interruption}} on |audioContext|.
 
 ## Autoplay ## {#autoplay-integration}
 
