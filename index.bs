@@ -44,8 +44,8 @@ iframe media playback based on whether the embedded iframe is rendered or not:
 
 # API # {#api}
 
-Control over media playback in [=nested browsing contexts=] in response to their visibility is relevant for user experience and performance reasons.
-Although simply disposing of the [=nested browsing context=] when not rendered would also achieve the same result (no audible media playback), it could lead to user-perceptible performance issues when the [=nested browsing context=] is rendered again, since it would need to be recreated from scratch.
+Control over media playback in [=child navigables=] in response to changes to their [=container=]'s visibility is relevant for user experience and performance reasons.
+Although simply disposing of the [=navigable container=] when not rendered would also achieve the same result (no audible media playback), it could lead to user-perceptible performance issues when the [=navigable container=] is rendered again, since it would need to be recreated from scratch.
 Moreover, disposing of the context could also lead to loss of state that the user might expect to be preserved - e.g. form data.
 
 This specification defines a new [=policy-controlled feature=] identified by the token "<dfn export><code>media-playback-while-not-visible</code></dfn>" that controls whether a {{Document}} is allowed to play media while it is not [=being rendered=].
@@ -99,7 +99,9 @@ Amend the definition of [=allowed to play=] so that |mediaElement| is also not [
 
 Note: Calling {{HTMLMediaElement/play()}} on |mediaElement| while it is not [=allowed to play=] will return a promise rejected with a "{{NotAllowedError}}" {{DOMException}}.
 
-The next steps assume that |navigableContainer| is not null. When |navigableContainer| stops [=being rendered=]:
+The next steps assume that |navigableContainer| is not null.
+
+When |navigableContainer| stops [=being rendered=]:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. Run the [=internal pause steps=] on |mediaElement|.
@@ -115,7 +117,9 @@ Amend the definition of [=allowed to start=] so that |audioContext| is also not 
 
 Note: If |audioContext| is created while |navigableContainer| is not [=being rendered=], it will be initialized in the {{AudioContextState/suspended}} state. Furthermore, attempting to call {{AudioContext/resume()}} on |audioContext| while |navigableContainer| is not [=being rendered=] will return a promise rejected with {{InvalidStateError}} and transition |audioContext| to the {{AudioContextState/interrupted}} state.
 
-The next steps assume that |navigableContainer| is not null. When |navigableContainer| stops [=being rendered=]:
+The next steps assume that |navigableContainer| is not null.
+
+When |navigableContainer| stops [=being rendered=]:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/running}}:
