@@ -51,15 +51,28 @@ Moreover, disposing of the context could also lead to loss of state that the use
 This specification defines a new [=policy-controlled feature=] identified by the token "<dfn export><code>media-playback-while-not-visible</code></dfn>" that controls whether a {{Document}} is allowed to play media while it is not [=being rendered=].
 The [=default allowlist=] for this policy is "[=default allowlist/*=]", meaning that documents are allowed to play media while not rendered unless the policy is explicitly disabled.
 
-A {{Document}} |document| is <dfn>allowed to play media while not rendered</dfn> if the "<a><code>media-playback-while-not-visible</code></a>" permission policy is <code>enabled</code> for it. |document| is disallowed otherwise. 
+To determine if a {{Document}} |document| is <dfn>allowed to play media while not rendered</dfn>, run the following steps:
+
+1. If |document| is [=/allowed to use=] the "<a><code>media-playback-while-not-visible</code></a>" feature, then return true.
+1. Return false otherwise.
 
 ## Usage example ## {#usage-example}
 
-Example showing how to use the <code>media-playback-while-not-visible</code> permission policy to prevent an <{iframe}> and all of its children from playing media when the iframe is not [=being rendered=].
-
-<div id="media-element-example" class="example">
+<div id="iframe-example" class="example">
+  <p>
+      Using the <code>media-playback-while-not-visible</code> permission policy to prevent an <{iframe}> and all of its children from playing media when the iframe is not [=being rendered=].
+  </p>
   <pre>
         &lt;iframe src="https://foo.media.com" allow="media-playback-while-not-visible 'none'"&gt;&lt;/iframe&gt;
+  </pre>
+</div>
+
+<div id="application-example" class="example">
+  <p>
+      To disable the <code>media-playback-while-not-visible</code> permission policy for an entire web application, the application can send the HTTP response header below. Doing so will disable the permission policy for the application's top-level {{Document}} and for all of the embedded <{iframe}>'s.
+  </p>
+  <pre>
+        Permissions-Policy: media-playback-while-not-visible=()
   </pre>
 </div>
 
@@ -75,32 +88,40 @@ The following sections describe how the "<a><code>media-playback-while-not-visib
 
 ## HTMLMediaElement ## {#html-media-element-integration}
 
-Let |frame| be an <{iframe}>. Let {{Document}} |document| be the [=content document=] of one of |frame|'s [=child navigables=]. Let |mediaElement| be an {{HTMLMediaElement}} in |document|
+Let |mediaElement| be an {{HTMLMediaElement}}. Let {{Document}} |document| be the |mediaElement|'s [=node document=]. Let [=/Navigable=] |navigable| be the [=node navigable=] of |mediaElement|. Let |navigableContainer| be the [=container=] of |navigable|.
 
-If |document| is not [=allowed to play media while not rendered=] and |frame| is not [=being rendered=], then |mediaElement| is not [=allowed to play=].
+Note: |navigableContainer| is null if |navigable| is a [=/top-level traversable=].
+
+Amend the definition of [=allowed to play=] so that |mediaElement| is also not [=allowed to play=] if all the following conditions are met:
+- |navigableContainer| is not null;
+- |document| is not [=allowed to play media while not rendered=]; and
+- |navigableContainer| is not [=being rendered=].
 
 Note: Calling {{HTMLMediaElement/play()}} on |mediaElement| while it is not [=allowed to play=] will return a promise rejected with a "{{NotAllowedError}}" {{DOMException}}.
 
-When |frame| stops [=being rendered=]:
+The next steps assume that |navigableContainer| is not null. When |navigableContainer| stops [=being rendered=]:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. Run the [=internal pause steps=] on |mediaElement|.
 
 ## Web Audio ## {#web-audio-integration}
 
-Let |frame| be an <{iframe}>. Let {{Document}} |document| be the [=content document=] of one of |frame|'s [=child navigables=]. Let |audioContext| be an {{AudioContext}} in |document|.
+Let |audioContext| be an {{AudioContext}}. Let {{Document}} |document| be the |audioContext|'s [=relevant global object=]'s [=associated Document=]. Let |navigable| be [=/Navigable=] whose [=active document=] is |document|. Let |navigableContainer| be the [=navigable container=] whose [=content document=] is |document|.
 
-If |document| is not [=allowed to play media while not rendered=] and |frame| is not [=being rendered=], then |audioContext| is not [=allowed to start=].
+Amend the definition of [=allowed to start=] so that |audioContext| is also not [=allowed to start=] if all the following conditions are met:
+- |navigableContainer| is not null;
+- |document| is not [=allowed to play media while not rendered=]; and
+- |navigableContainer| is not [=being rendered=].
 
-Note: If |audioContext| is created while |frame| is not [=being rendered=], it will be initialized in the {{AudioContextState/suspended}} state. Furthermore, attempting to call {{AudioContext/resume()}} on |audioContext| while |frame| is not [=being rendered=] will return a promise rejected with {{InvalidStateError}} and transition |audioContext| to the {{AudioContextState/interrupted}} state.
+Note: If |audioContext| is created while |navigableContainer| is not [=being rendered=], it will be initialized in the {{AudioContextState/suspended}} state. Furthermore, attempting to call {{AudioContext/resume()}} on |audioContext| while |navigableContainer| is not [=being rendered=] will return a promise rejected with {{InvalidStateError}} and transition |audioContext| to the {{AudioContextState/interrupted}} state.
 
-When |frame| stops [=being rendered=]:
+The next steps assume that |navigableContainer| is not null. When |navigableContainer| stops [=being rendered=]:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/running}}:
         1. {{AudioContext/interruption-start|Start an interruption}} on |audioContext|.
 
-When |frame| becomes [=being rendered=] again:
+When |navigableContainer| starts [=being rendered=] again:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/interrupted}}:
@@ -108,8 +129,13 @@ When |frame| becomes [=being rendered=] again:
 
 ## Autoplay ## {#autoplay-integration}
 
-A {{HTMLMediaElement}} |mediaElement| whose parent <{iframe}> |frame| is not [=allowed to play media while not rendered=] SHOULD NOT be [=eligible for autoplay=] while |frame| is not [=being rendered=].
+Let |mediaElement| be an {{HTMLMediaElement}}. Let {{Document}} |document| be the |mediaElement|'s [=node document=]. Let [=/Navigable=] |navigable| be the [=node navigable=] of |mediaElement|. Let |navigableContainer| be the [=container=] of |navigable|.
 
-Moreover, if |mediaElement| is currently playing because of autoplay and |frame| stops [=being rendered=], the user-agent MUST run the [=internal pause steps=] on |mediaElement|.
+Amend the definition of [=eligible for autoplay=] so that |mediaElement| is also not [=eligible for autoplay=] if all the following conditions are met:
+- |navigableContainer| is not null;
+- |document| is not [=allowed to play media while not rendered=]; and
+- |navigableContainer| is not [=being rendered=].
 
-The "<a><code>media-playback-while-not-visible</code></a>" permission policy MUST NOT affect autoplay behavior if |frame| is currently [=being rendered=].
+Moreover, if |mediaElement| is currently playing because of autoplay and |navigableContainer| stops [=being rendered=], the user-agent MUST run the [=internal pause steps=] on |mediaElement|. When |navigableContainer| starts [=being rendered=] again, |mediaElement| MUST remain paused until playback is explicitly resumed.
+
+The "<a><code>media-playback-while-not-visible</code></a>" permission policy MUST NOT affect autoplay behavior if |navigableContainer| is currently [=being rendered=].
