@@ -99,9 +99,7 @@ Amend the definition of [=allowed to play=] so that |mediaElement| is also not [
 
 Note: Calling {{HTMLMediaElement/play()}} on |mediaElement| while it is not [=allowed to play=] will return a promise rejected with a "{{NotAllowedError}}" {{DOMException}}.
 
-The next steps assume that |navigableContainer| is not null.
-
-When |navigableContainer| stops [=being rendered=]:
+When |navigableContainer| is not null and stops [=being rendered=]:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. Run the [=internal pause steps=] on |mediaElement|.
@@ -117,15 +115,13 @@ Amend the definition of [=allowed to start=] so that |audioContext| is also not 
 
 Note: If |audioContext| is created while |navigableContainer| is not [=being rendered=], it will be initialized in the {{AudioContextState/suspended}} state. Furthermore, attempting to call {{AudioContext/resume()}} on |audioContext| while |navigableContainer| is not [=being rendered=] will return a promise rejected with {{InvalidStateError}} and transition |audioContext| to the {{AudioContextState/interrupted}} state.
 
-The next steps assume that |navigableContainer| is not null.
-
-When |navigableContainer| stops [=being rendered=]:
+When |navigableContainer| is not null and stops [=being rendered=]:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/running}}:
         1. {{AudioContext/interruption-start|Start an interruption}} on |audioContext|.
 
-When |navigableContainer| starts [=being rendered=] again:
+When |navigableContainer| is not null and starts [=being rendered=] again:
 
 1. If |document| is not [=allowed to play media while not rendered=]:
     1. If |audioContext| {{BaseAudioContext/state}} is {{AudioContextState/interrupted}}:
