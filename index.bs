@@ -2,7 +2,7 @@
 Title: Iframe Media Pausing
 Shortname: iframe-media-pausing
 Level: 1
-Status: w3c/UD
+Status: w3c/CG-DRAFT
 Group: wicg
 Repository: wicg/iframe-media-pausing
 URL: https://github.com/WICG/iframe-media-pausing
